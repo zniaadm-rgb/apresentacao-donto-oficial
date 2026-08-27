@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Donto — O copiloto clínico que pensa junto com você</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<style>
+  :root {
+    --bg: #eef0f3;
+    --bg-soft: #f5f6f8;
+    --surface: #ffffff;
+    --ink: #0a0f1f;
+    --ink-2: #6b7280;
+    --ink-3: #9aa3b2;
+    --line: rgba(10, 15, 31, 0.07);
+    --line-strong: rgba(10, 15, 31, 0.12);
+    --blue: #2563eb;
+    --blue-soft: #eef2ff;
+    --violet: #6366f1;
+    --grad: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #4f46e5 100%);
+    --grad-soft: linear-gradient(135deg, rgba(139,92,246,0.10), rgba(79,70,229,0.10));
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+  }
+
+  html, body { background: var(--bg); margin: 0; padding: 0; height: 100%; }
+  body { font-family: 'Inter', system-ui, sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  deck-stage { background: #1a1d23; display: block; width: 100%; height: 100%; }
+
+  section {
+    width: 1920px;
+    height: 1080px;
+    background: var(--bg);
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+    font-family: 'Inter', system-ui, sans-serif;
+    box-sizing: border-box;
+  }
+
+  /* ============ SHARED CHROME ============ */
+  .top-line {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--line);
+    z-index: 5;
+  }
+  .top-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 20%, rgba(99,102,241,0.4) 50%, transparent 80%);
+    height: 2px;
+    width: 320px;
+    left: 80px;
+  }
+
+  .brand {
+    position: absolute;
+    top: 56px;
+    left: 80px;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+  }
+  .brand img { height: 70px; display: block; }
+
+  .slide-num {
+    position: absolute;
+    right: 80px;
+    bottom: 56px;
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    font-variant-numeric: tabular-nums;
+    z-index: 10;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .slide-num span { color: var(--ink); font-weight: 600; }
+
+  .slide-body {
+    position: absolute;
+    inset: 140px 120px 120px 120px;
+    display: flex;
+    flex-direction: column;
+  }
+  h1, h2, h3, p { margin: 0; }
+
+  /* Headlines bold, NOT light */
+  .h-display {
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 0.98;
+    color: var(--ink);
+  }
+  .h-1 {
+    font-weight: 700;
+    letter-spacing: -2.5px;
+    line-height: 1.0;
+    color: var(--ink);
+  }
+  .h-2 {
+    font-weight: 600;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .sub {
+    color: var(--ink-2);
+    font-weight: 400;
+    letter-spacing: -0.2px;
+    line-height: 1.45;
+  }
+
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .eyebrow .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--violet);
+    margin-right: 12px;
+    vertical-align: middle;
+    margin-bottom: 2px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 22px 44px;
+    background: var(--grad);
+    color: #fff;
+    border-radius: 100px;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    box-shadow: 0 18px 50px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .pill:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 60px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .pill-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    background: var(--surface);
+    color: var(--ink);
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    border: 1px solid var(--line-strong);
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: 24px;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 24px 60px -28px rgba(10,15,31,0.18);
+  }
+
+  /* ============ SLIDE 1 — CAPA ============ */
+  .s1 {
+    background:
+      radial-gradient(ellipse 1200px 800px at 80% 20%, rgba(139,92,246,0.10), transparent 60%),
+      radial-gradient(ellipse 1000px 700px at 15% 85%, rgba(99,102,241,0.10), transparent 60%),
+      var(--bg);
+  }
+  .s1 .hero {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 160px;
+    position: relative;
+    z-index: 2;
+  }
+  .s1 .big-logo { margin-bottom: 70px; }
+  .s1 .big-logo img { height: 130px; }
+  .s1 .tagline {
+    font-size: 124px;
+    font-weight: 700;
+    letter-spacing: -5px;
+    line-height: 0.96;
+    color: var(--ink);
+    max-width: 1500px;
+    margin-bottom: 44px;
+  }
+  .s1 .tagline em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .s1 .subline {
+    font-size: 28px;
+    color: var(--ink-2);
+    max-width: 900px;
+    line-height: 1.45;
+    font-weight: 400;
+    letter-spacing: -0.2px;
+  }
+  .s1 .meta {
+    position: absolute;
+    right: 160px;
+    bottom: 100px;
+    text-align: right;
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .s1 .meta strong { color: var(--ink); font-weight: 500; }
+  .s1 .particles {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .s1 .particles span {
+    position: absolute;
+    width: 3px; height: 3px;
+    background: var(--violet);
+    border-radius: 50%;
+    opacity: 0.35;
+    box-shadow: 0 0 8px rgba(99,102,241,0.6);
+    animation: floaty 9s ease-in-out infinite;
+  }
+  @keyframes floaty {
+    0%,100% { transform: translateY(0); opacity: 0.3; }
+    50% { transform: translateY(-24px); opacity: 0.7; }
+  }
+
+  /* ============ SLIDE 2 — MANIFESTO (QUOTE) ============ */
+  .s-quote {
+    background:
+      radial-gradient(ellipse 1100px 700px at 80% 30%, rgba(139,92,246,0.06), transparent 65%),
+      radial-gradient(ellipse 900px 600px at 15% 80%, rgba(99,102,241,0.06), transparent 65%),
+      var(--bg);
+  }
+  .quote-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 56px;
+    padding: 0 80px;
+  }
+  .quote {
+    margin: 0;
+    position: relative;
+    max-width: 1500px;
+  }
+  .quote .mark {
+    position: absolute;
+    top: -130px;
+    left: -40px;
+    font-size: 260px;
+    line-height: 1;
+    font-weight: 700;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-family: 'Inter', serif;
+    pointer-events: none;
+    opacity: 0.12;
+    z-index: 0;
+  }
+  .quote .line-1, .quote .line-2 { position: relative; z-index: 1; }
+  .quote .line-1 {
+    font-size: 64px;
+    font-weight: 600;
+    letter-spacing: -2.5px;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 26px;
+  }
+  .quote .line-2 {
+    font-size: 56px;
+    font-weight: 400;
+    letter-spacing: -1.8px;
+    line-height: 1.15;
+    color: var(--ink-2);
+  }
+  .quote .line-2 em {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 600;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .quote-attr {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 12px;
+  }
+  .quote-attr .rule {
+    width: 70px;
+    height: 2px;
+    background: var(--ink);
+  }
+  .quote-attr .attr-text {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+  .quote-attr .attr-text strong {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .quote-attr .attr-text span {
+    font-size: 18px;
+    color: var(--ink-2);
+    font-weight: 400;
+    letter-spacing: -0.1px;
+  }
+
+  /* ============ SLIDE 3 — REALIDADE ============ */
+  .s2 .body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    justify-content: flex-start;
+    padding-top: 20px;
+  }
+  .s2 .head { max-width: 1400px; }
+  .s2 .head .h-1 { font-size: 80px; margin-bottom: 22px; }
+  .s2 .head .sub { font-size: 28px; max-width: 1200px; }
+  .s2 .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .s2 .stat {
+    background: var(--surface);
+    border-radius: 28px;
+    padding: 40px 44px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 24px 60px -28px rgba(10,15,31,0.18);
+  }
+  .s2 .stat .lbl {
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    margin-bottom: 20px;
+  }
+  .s2 .stat .num {
+    font-size: 112px;
+    font-weight: 700;
+    letter-spacing: -6px;
+    line-height: 0.9;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .s2 .stat .num .pct { font-size: 66px; vertical-align: 22px; letter-spacing: -3px; }
+  .s2 .stat .unit {
+    font-size: 19px;
+    color: var(--violet);
+    font-weight: 500;
+    letter-spacing: 0;
+    margin-bottom: 20px;
+  }
+  .s2 .stat .desc {
+    font-size: 19px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+  .s2 .footer-quote {
+    font-size: 24px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .s2 .footer-quote::before {
+    content: "";
+    width: 40px; height: 1px;
+    background: var(--ink);
+  }
+
+  /* ============ SLIDE 4 — O PROBLEMA ============ */
+  .s-problem {
+    background:
+      radial-gradient(ellipse 1100px 700px at 85% 15%, rgba(239,68,68,0.05), transparent 65%),
+      radial-gradient(ellipse 900px 600px at 10% 85%, rgba(99,102,241,0.05), transparent 65%),
+      var(--bg);
+  }
+  .problem-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    justify-content: center;
+    padding-top: 8px;
+  }
+  .problem-head { max-width: 1500px; }
+  .problem-head .h-1 { font-size: 64px; }
+  .problem-head .h-1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .problem-head .sub { font-size: 22px; }
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 22px;
+  }
+  .p-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    grid-template-rows: auto auto auto;
+    column-gap: 22px;
+    row-gap: 6px;
+    align-items: start;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 16px 40px -28px rgba(10,15,31,0.18);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+  .p-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--violet);
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 28px 60px -28px rgba(99,102,241,0.30);
+  }
+  .p-icn {
+    grid-row: 1 / span 3;
+    align-self: start;
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: var(--grad-soft);
+    border: 1px solid rgba(99,102,241,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--violet);
+    flex-shrink: 0;
+  }
+  .p-icn svg { width: 28px; height: 28px; }
+  .p-icn.red {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.2);
+    color: var(--red);
+  }
+  .p-icn.yellow {
+    background: rgba(245,158,11,0.10);
+    border-color: rgba(245,158,11,0.22);
+    color: var(--yellow);
+  }
+  .p-icn.neutral {
+    background: rgba(122,155,196,0.10);
+    border-color: rgba(122,155,196,0.22);
+    color: #6b7280;
+  }
+  .p-stat { display: flex; align-items: baseline; }
+  .p-num {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -2px;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .p-num.n-blue { color: var(--violet); }
+  .p-num.n-red { color: var(--red); }
+  .p-num.n-yellow { color: var(--yellow); }
+  .p-num.n-neutral { color: #6b7280; }
+  .p-unit {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    align-self: center;
+  }
+  .p-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+  .p-desc {
+    font-size: 15px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+    margin-top: 4px;
+  }
+  .problem-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 4px;
+  }
+  .problem-foot .rule {
+    flex: 0 0 80px;
+    height: 1px;
+    background: var(--line-strong);
+  }
+  .problem-foot .foot-txt {
+    font-size: 20px;
+    color: var(--ink-2);
+    letter-spacing: -0.2px;
+    font-weight: 400;
+  }
+  .problem-foot .foot-txt strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .problem-foot .foot-txt em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+
+  /* ============ SLIDE 5 — O QUE É (was SLIDE 3) ============ */
+  .s3 .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 100px;
+    height: 100%;
+    align-items: center;
+  }
+  .s3 .left .eyebrow { margin-bottom: 32px; }
+  .s3 .h-1 { font-size: 76px; margin-bottom: 36px; }
+  .s3 .h-1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .s3 .copy {
+    font-size: 22px;
+    color: var(--ink-2);
+    line-height: 1.6;
+    max-width: 720px;
+    letter-spacing: -0.1px;
+  }
+  .s3 .copy strong { color: var(--ink); font-weight: 600; }
+  .s3 .copy + .copy { margin-top: 22px; }
+
+  /* Patient Virtual screenshot */
+  .pv-shot {
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 40px 100px -40px rgba(10,15,31,0.28);
+    line-height: 0;
+  }
+  .pv-shot img { width: 100%; height: auto; display: block; }
+
+  /* Patient Virtual mockup */
+  .pv-wrap { position: relative; width: 720px; height: 720px; margin-left: auto; }
+  .pv-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--surface);
+    border-radius: 36px;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 40px 100px -40px rgba(10,15,31,0.2);
+  }
+  .pv-bg::before {
+    content: "PACIENTE VIRTUAL";
+    position: absolute;
+    top: 32px; left: 36px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .pv-bg::after {
+    content: "● ATIVO";
+    position: absolute;
+    top: 30px; right: 36px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .pv-center {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 30px 60px rgba(99,102,241,0.35);
+  }
+  .pv-center::before {
+    content: "";
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    border: 1px solid rgba(99,102,241,0.3);
+    animation: pulse-ring 3s ease-out infinite;
+  }
+  .pv-center::after {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    border-radius: 50%;
+    border: 1px solid rgba(99,102,241,0.15);
+    animation: pulse-ring 3s ease-out infinite 0.5s;
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(0.9); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+  .pv-center .label {
+    color: #fff;
+    font-size: 14px;
+    letter-spacing: 1px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    text-transform: uppercase;
+    z-index: 2;
+  }
+  .pv-mod {
+    position: absolute;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.1px;
+  }
+  .pv-mod .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--violet);
+  }
+  .pv-mod.m1 { top: 100px; left: 50px; }
+  .pv-mod.m2 { top: 100px; right: 50px; }
+  .pv-mod.m3 { top: 50%; left: 30px; transform: translateY(-50%); }
+  .pv-mod.m4 { top: 50%; right: 30px; transform: translateY(-50%); }
+  .pv-mod.m5 { bottom: 100px; left: 50px; }
+  .pv-mod.m6 { bottom: 100px; right: 50px; }
+  .pv-lines { position: absolute; inset: 0; pointer-events: none; }
+
+  /* ============ STEP SLIDES SHARED ============ */
+  .step .body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    height: auto;
+    max-height: 100%;
+    justify-content: center;
+    gap: 22px;
+  }
+  .step .eyebrow { margin-bottom: 4px; }
+  .step .h-display {
+    font-size: 96px;
+    letter-spacing: -4px;
+  }
+  .step .h-display .num {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .step .sub-h {
+    font-size: 28px;
+    color: var(--ink-2);
+    max-width: 1100px;
+    line-height: 1.4;
+    font-weight: 400;
+    letter-spacing: -0.2px;
+  }
+  .step .mockup { margin-top: 18px; }
+  .step .footer-q {
+    margin-top: 18px;
+    font-size: 18px;
+    color: var(--ink-2);
+    font-weight: 400;
+    letter-spacing: -0.1px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .step .footer-q::before, .step .footer-q::after {
+    content: "";
+    width: 30px; height: 1px;
+    background: var(--line-strong);
+  }
+
+  .demo-frame {
+    width: 860px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #0a0f1f;
+    border: 1px solid var(--line-strong);
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 40px 100px -40px rgba(10,15,31,0.28);
+    display: block;
+    line-height: 0;
+  }
+  .demo-frame video { width: 100%; height: auto; display: block; }
+
+  /* ============ SLIDE 4 — Recording ============ */
+  .rec-card {
+    background: var(--surface);
+    border-radius: 32px;
+    padding: 44px 96px;
+    width: 880px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 40px 100px -40px rgba(10,15,31,0.2);
+  }
+  .rec-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--red);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .rec-status .live {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.75); }
+  }
+  .rec-btn {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff7878, #ef4444 70%, #b91c1c);
+    box-shadow:
+      0 0 0 0 rgba(239,68,68,0.5),
+      0 20px 50px rgba(239,68,68,0.35),
+      inset 0 -10px 20px rgba(0,0,0,0.2);
+    animation: rec-pulse 1.8s ease-out infinite;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .rec-btn::before {
+    content: "";
+    width: 34px; height: 34px;
+    background: #fff;
+    border-radius: 8px;
+  }
+  @keyframes rec-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45), 0 20px 50px rgba(239,68,68,0.35), inset 0 -10px 20px rgba(0,0,0,0.2); }
+    70% { box-shadow: 0 0 0 36px rgba(239,68,68,0), 0 20px 50px rgba(239,68,68,0.35), inset 0 -10px 20px rgba(0,0,0,0.2); }
+    100% { box-shadow: 0 0 0 0 rgba(239,68,68,0), 0 20px 50px rgba(239,68,68,0.35), inset 0 -10px 20px rgba(0,0,0,0.2); }
+  }
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 80px;
+    width: 100%;
+  }
+  .waveform span {
+    display: block;
+    width: 5px;
+    background: var(--grad);
+    border-radius: 3px;
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  @keyframes wave {
+    0%,100% { height: 10px; opacity: 0.5; }
+    50% { height: 70px; opacity: 1; }
+  }
+  .timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 52px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer .colon { color: var(--violet); animation: blink 1s ease-in-out infinite; }
+
+  /* ============ SLIDE 5 — Transcription + Odontogram ============ */
+  .twin {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    width: 1500px;
+  }
+  .mini {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 26px 30px;
+    box-sizing: border-box;
+    text-align: left;
+    height: 440px;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 24px 60px -28px rgba(10,15,31,0.18);
+  }
+  .mini .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .mini .head .t {
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .mini .head .live {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .mini .head .live::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 1.5s infinite;
+  }
+
+  .odo-card {
+    padding: 0;
+    overflow: hidden;
+    background: #ffffff;
+    display: block;
+    position: relative;
+  }
+  .odo-card img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+
+  /* Transcript */
+  .transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .t-msg {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .t-msg .av {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+  .t-msg.dr .av { background: var(--grad); }
+  .t-msg.pa .av { background: #1f2937; }
+  .t-msg .bubble {
+    background: var(--bg-soft);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 16px;
+    line-height: 1.4;
+    color: var(--ink);
+    max-width: 90%;
+    letter-spacing: -0.1px;
+  }
+  .t-msg .who {
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .t-msg.live .bubble::after {
+    content: "▋";
+    color: var(--violet);
+    animation: blink 0.8s infinite;
+    margin-left: 2px;
+  }
+  .bubble.typing::after, #sonda-typing.typing::after {
+    content: "▋";
+    color: var(--violet);
+    animation: blink 0.8s infinite;
+    margin-left: 2px;
+    display: inline-block;
+  }
+  #sonda-typing {
+    min-height: 1.5em;
+  }
+  #sonda-typing strong { color: var(--violet); font-weight: 600; }
+
+  /* Odontogram */
+  .odo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    justify-content: center;
+  }
+  .odo-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 5px;
+  }
+  .tooth {
+    height: 56px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 7px 7px 4px 4px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 4px;
+    font-size: 10px;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+  }
+  .tooth.upper { border-radius: 4px 4px 7px 7px; align-items: flex-start; padding-bottom: 0; padding-top: 4px; }
+  .tooth::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    background: rgba(10,15,31,0.04);
+    border-radius: 4px;
+  }
+  .tooth.marked::before { background: var(--red); }
+  .tooth.marked-y::before { background: var(--yellow); }
+  .tooth.flash::before { animation: flash 1.2s ease-out infinite; }
+  @keyframes flash {
+    0%, 100% { background: var(--red); }
+    50% { background: var(--violet); box-shadow: 0 0 12px var(--violet); }
+  }
+  .odo-legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--ink-3);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .odo-legend span { display: flex; align-items: center; gap: 6px; }
+  .odo-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  /* ============ SLIDE 6 — DOCS ============ */
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    width: 1500px;
+  }
+  .doc {
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 32px 32px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 20px 50px -28px rgba(10,15,31,0.18);
+    border: 1px solid var(--line);
+  }
+  .doc::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 24px; bottom: 24px;
+    width: 3px;
+    background: var(--grad);
+    border-radius: 0 3px 3px 0;
+  }
+  .doc .icn {
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    background: var(--grad-soft);
+    border: 1px solid rgba(99,102,241,0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .doc .icn svg { width: 26px; height: 26px; }
+  .doc .text { text-align: left; }
+  .doc .text .num {
+    font-size: 10px;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .doc .text .name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+
+  /* ============ SLIDE 7 — SONDA ============ */
+  .s7 .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    height: 100%;
+    align-items: center;
+  }
+  .s7 .left .eyebrow { margin-bottom: 32px; }
+  .s7 .h-1 { font-size: 76px; margin-bottom: 32px; }
+  .s7 .h-1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .s7 .lead {
+    font-size: 22px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    margin-bottom: 48px;
+    max-width: 720px;
+    letter-spacing: -0.1px;
+  }
+  .s7 .bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .s7 .bullet {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .s7 .bullet .m {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--grad-soft);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--violet);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    font-weight: 600;
+  }
+  .s7 .bullet .x {
+    font-size: 19px;
+    color: var(--ink);
+    line-height: 1.45;
+    letter-spacing: -0.1px;
+  }
+  .s7 .bullet .x strong { font-weight: 600; }
+  .s7 .bullet .x em {
+    font-style: normal;
+    color: var(--ink-2);
+    font-weight: 400;
+  }
+
+  /* Sonda chat — matches the website style */
+  .sonda {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 40px 100px -40px rgba(10,15,31,0.22);
+  }
+  .sonda-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .sonda-h .name {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .sonda-h .name span { color: var(--ink-3); font-weight: 400; }
+  .sonda-h .status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: var(--green);
+    font-weight: 400;
+    letter-spacing: -0.1px;
+  }
+  .sonda-h .status::before {
+    content: "";
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: blink 1.5s infinite;
+  }
+  .sonda-msg {
+    background: var(--bg-soft);
+    border-left: 3px solid var(--violet);
+    border-radius: 8px;
+    padding: 22px 26px;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--ink);
+    margin-bottom: 22px;
+    letter-spacing: -0.1px;
+  }
+  .sonda-msg .who-line {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .sonda-msg strong { color: var(--violet); font-weight: 600; }
+  .sonda-src {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line-strong);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .sonda-src b { color: var(--ink); font-weight: 600; }
+  .sonda-chips {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .chip {
+    padding: 12px 22px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 100px;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: -0.1px;
+  }
+  .sonda-input {
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    padding: 14px 18px 14px 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--ink-3);
+  }
+  .sonda-input .send {
+    margin-left: auto;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .sonda-input .send svg { width: 16px; height: 16px; }
+
+  /* ============ SLIDE 8 — DIFERENCIAL ============ */
+  .s8 .body { gap: 40px; justify-content: center; height: 100%; }
+  .s8 .head { text-align: center; max-width: 1400px; margin: 0 auto; }
+  .s8 .h-1 { font-size: 64px; margin-bottom: 18px; }
+  .s8 .h-1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .s8 .head .sub { font-size: 22px; max-width: 1200px; margin: 0 auto; }
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  .diff {
+    background: var(--surface);
+    border-radius: 22px;
+    padding: 32px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 20px 50px -28px rgba(10,15,31,0.18);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .diff::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0;
+    width: 140px; height: 140px;
+    background: radial-gradient(circle at 100% 0%, rgba(99,102,241,0.10), transparent 70%);
+    pointer-events: none;
+  }
+  .diff .n {
+    font-size: 14px;
+    color: var(--violet);
+    font-weight: 600;
+    letter-spacing: 3px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .diff .t {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+  .diff .d {
+    font-size: 16px;
+    color: var(--ink-2);
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+  }
+
+  /* ============ SLIDE 9 — ANTES / DEPOIS ============ */
+  .s9 .body { gap: 50px; justify-content: center; }
+  .s9 .head { text-align: center; max-width: 1500px; margin: 0 auto; }
+  .s9 .h-1 { font-size: 76px; }
+  .s9 .h-1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 48px;
+    align-items: stretch;
+  }
+  .compare .divider {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--line-strong), transparent);
+    align-self: stretch;
+    position: relative;
+  }
+  .compare .divider::before {
+    content: "→";
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 30px rgba(99,102,241,0.35);
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .col-head {
+    font-size: 14px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .col.before .col-head { color: var(--red); }
+  .col.after .col-head { color: var(--green); }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    background: var(--surface);
+    border-radius: 14px;
+    font-size: 18px;
+    color: var(--ink);
+    letter-spacing: -0.1px;
+    line-height: 1.35;
+    font-weight: 400;
+    box-shadow: 0 1px 0 rgba(10,15,31,0.04), 0 10px 28px -18px rgba(10,15,31,0.18);
+    border: 1px solid var(--line);
+  }
+  .col.before .row { border-color: rgba(239,68,68,0.16); }
+  .col.after .row { border-color: rgba(16,185,129,0.16); }
+  .row .icon {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .col.before .icon { background: rgba(239,68,68,0.10); color: var(--red); }
+  .col.after .icon { background: rgba(16,185,129,0.12); color: var(--green); }
+
+  /* ============ SLIDE 10 — ENCERRAMENTO ============ */
+  .s10 {
+    background:
+      radial-gradient(ellipse 1400px 900px at 50% 60%, rgba(99,102,241,0.10), transparent 70%),
+      var(--bg);
+  }
+  .s10 .body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 36px;
+  }
+  .s10 .big-logo { margin-bottom: 24px; }
+  .s10 .big-logo img { height: 110px; }
+  .s10 .h {
+    font-size: 110px;
+    font-weight: 700;
+    letter-spacing: -4.5px;
+    line-height: 0.98;
+  }
+  .s10 .h .l2 {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .s10 .subline {
+    font-size: 24px;
+    color: var(--ink-2);
+    margin-top: 4px;
+    letter-spacing: -0.2px;
+    font-weight: 400;
+  }
+  .s10 .manifesto {
+    font-size: 22px;
+    color: var(--ink-2);
+    max-width: 1100px;
+    line-height: 1.5;
+    letter-spacing: -0.15px;
+    font-weight: 400;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    justify-content: center;
+  }
+  .s10 .manifesto::before,
+  .s10 .manifesto::after {
+    content: "";
+    width: 64px;
+    height: 1px;
+    background: var(--line-strong);
+    flex-shrink: 0;
+  }
+  .s10 .manifesto em {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .s10 .cta { margin-top: 18px; }
+  .s10 .footer {
+    position: absolute;
+    bottom: 80px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-3);
+    letter-spacing: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .s10 .footer span { color: var(--ink); margin: 0 14px; font-weight: 600; }
+
+</style>
+</head>
+<body>
+
+<deck-stage>
+
+  <!-- ============ SLIDE 1 — CAPA ============ -->
+  <section class="s1" data-screen-label="01 Capa">
+    <div class="top-line"></div>
+
+    <div class="particles">
+      <span style="top: 18%; left: 12%; animation-delay: 0s;"></span>
+      <span style="top: 28%; left: 88%; animation-delay: 1.2s;"></span>
+      <span style="top: 65%; left: 8%; animation-delay: 2.4s;"></span>
+      <span style="top: 78%; left: 78%; animation-delay: 0.6s;"></span>
+      <span style="top: 42%; left: 92%; animation-delay: 3.1s;"></span>
+      <span style="top: 86%; left: 32%; animation-delay: 1.8s;"></span>
+      <span style="top: 12%; left: 48%; animation-delay: 2.9s;"></span>
+      <span style="top: 88%; left: 62%; animation-delay: 0.3s;"></span>
+      <span style="top: 22%; left: 72%; animation-delay: 3.6s;"></span>
+      <span style="top: 58%; left: 22%; animation-delay: 1.5s;"></span>
+    </div>
+
+    <div class="hero">
+      <div class="big-logo"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+      <div class="tagline"><span style="color: #000000;">O <em>copiloto clínico</em> que pensa junto com o dentista.</span></div>
+      <div class="subline">Inteligência clínica em tempo real. Documentação automatizada no padrão CFO. Conformidade jurídica desde o primeiro atendimento.</div>
+
+      <div class="meta">
+        <div><strong></strong></div>
+        <div style="margin-top: 6px;">
+</div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>01</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 2 — MANIFESTO ============ -->
+  <section class="s-quote" data-screen-label="02 Manifesto">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body quote-body">
+      <div class="eyebrow"><span class="dot"></span>MANIFESTO</div>
+
+      <blockquote class="quote">
+        <span class="mark">&ldquo;</span>
+        <div class="line-1">A grande questão não é quem tem a melhor técnica.</div>
+        <div class="line-2">É quem entende melhor o <em>problema</em> — e escolhe a melhor solução <em>para o paciente</em>.</div>
+      </blockquote>
+
+      <div class="quote-attr">
+        <span class="rule"></span>
+        <div class="attr-text">
+          <strong>Donto</strong>
+          <span>O copiloto clínico do dentista</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>02</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 3 — O PROBLEMA É MAIOR DO QUE PARECE ============ -->
+  <section class="s-problem" data-screen-label="03 O problema é maior">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body problem-body">
+      <div class="problem-head">
+        <div class="eyebrow"><span class="dot"></span>O PROBLEMA</div>
+        <div class="h-1" style="margin-top: 22px;">Não é um problema. São vários<br><em>acontecendo ao mesmo tempo.</em></div>
+        <div class="sub" style="margin-top: 20px;">E nenhum sistema foi construído para resolver todos eles.</div>
+      </div>
+
+      <div class="problem-grid">
+        <!-- Card 1 — Tempo -->
+        <div class="p-card">
+          <div class="p-icn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+          </div>
+          <div class="p-stat">
+            <div class="p-num n-blue">120<span class="p-unit">min/dia</span></div>
+          </div>
+          <div class="p-title">Tempo desperdiçado</div>
+          <div class="p-desc">São 40 horas por mês — uma semana inteira de trabalho perdida em documentação manual. Todo dia. Sem exceção.</div>
+        </div>
+
+        <!-- Card 2 — Risco -->
+        <div class="p-card">
+          <div class="p-icn red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="16.5" r="0.6" fill="currentColor"/></svg>
+          </div>
+          <div class="p-stat">
+            <div class="p-num n-red">+305<span style="font-size: 0.55em;">%</span><span class="p-unit">em processos</span></div>
+          </div>
+          <div class="p-title">Exposição jurídica crescente</div>
+          <div class="p-desc">Prontuário incompleto, TCLE ausente, consentimento mal documentado — as principais causas de ações contra dentistas, e estão crescendo.</div>
+        </div>
+
+        <!-- Card 3 — Decisão -->
+        <div class="p-card">
+          <div class="p-icn yellow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2C6.8 2 5 3.8 5 6c0 1 .3 1.8.8 2.5C5.3 9.2 5 10.1 5 11c0 1.3.6 2.5 1.5 3.2-.3.5-.5 1.2-.5 1.8 0 2.2 1.8 4 4 4 1 0 2-.4 2.7-1 .6.6 1.5 1 2.6 1 2.2 0 4-1.8 4-4 0-.6-.2-1.3-.5-1.8.9-.7 1.5-1.9 1.5-3.2 0-.9-.3-1.8-.8-2.5.5-.7.8-1.5.8-2.5 0-2.2-1.8-4-4-4-1 0-2 .4-2.7 1C11 2.4 10 2 9 2z"/></svg>
+          </div>
+          <div class="p-stat">
+            <div class="p-num n-yellow">1<span class="p-unit">profissional · múltiplas tarefas</span></div>
+          </div>
+          <div class="p-title">Decisão clínica sem suporte</div>
+          <div class="p-desc">Examinar, conversar, diagnosticar, registrar, lembrar de protocolos — tudo ao mesmo tempo, sem apoio nem referência clínica rápida durante o atendimento.</div>
+        </div>
+
+        <!-- Card 4 — Fragmentação -->
+        <div class="p-card">
+          <div class="p-icn neutral">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 11h-1V8a2 2 0 0 0-2-2h-3V5a3 3 0 0 0-6 0v1H4a2 2 0 0 0-2 2v3h1a2 2 0 0 1 0 4H2v3a2 2 0 0 0 2 2h3v-1a3 3 0 0 1 6 0v1h3a2 2 0 0 0 2-2v-3h1a2 2 0 0 0 0-4z"/></svg>
+          </div>
+          <div class="p-stat">
+            <div class="p-num n-neutral">∞<span class="p-unit">sistemas diferentes</span></div>
+          </div>
+          <div class="p-title">Paciente sem visão completa</div>
+          <div class="p-desc">Anamnese no papel. Raio-x num sistema. Odontograma em outro. Foto no celular. Periograma à mão. Nenhuma visão completa do paciente em um só lugar.</div>
+        </div>
+      </div>
+
+      <div class="problem-foot">
+        <span class="rule"></span>
+        <div class="foot-txt">Quatro problemas. <strong>Uma solução.</strong> <em>O Donto.</em></div>
+        <span class="rule"></span>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>03</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 4 — O QUE É ============ -->
+  <section class="s3" data-screen-label="04 O que é o Donto">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="left">
+        <div class="eyebrow"><span class="dot"></span>O QUE É O DONTO</div>
+        <div class="h-1" style="margin-top: 32px;">O Donto cria o<br><em>Paciente Virtual</em><br>do seu consultório.</div>
+        <p class="copy">
+          Não é um transcritor. Não é um gerador de documentos. O Donto é o <strong>ambiente digital completo do seu atendimento</strong> — onde anamnese, transcrição, exame clínico, odontograma, periograma e toda a documentação CFO vivem em um único lugar.
+        </p>
+        <p class="copy">Com o Paciente Virtual, você <strong>diagnostica com mais profundidade</strong> e escolhe a melhor solução junto com seu paciente.</p>
+      </div>
+
+      <div class="right">
+        <div class="pv-shot">
+          <img src="assets/donto_sonda_demo.gif" alt="Paciente Virtual do Donto — estado atual do paciente">
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>04</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 5 — PASSO 1 ============ -->
+  <section class="s4 step" data-screen-label="05 Passo 1 — Gravar">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="eyebrow"><span class="dot"></span>COMO FUNCIONA · PASSO 01</div>
+      <div class="h-display"><span class="num">01</span> &nbsp; Aperte gravar.</div>
+      <div class="sub-h">E fala normalmente com seu paciente.
+Nada muda na consulta.</div>
+
+      <div class="mockup">
+        <div class="demo-frame">
+          <video src="assets/donto_demo.mp4" autoplay muted loop playsinline></video>
+        </div>
+      </div>
+
+      <div class="footer-q">Sem interrupção. Sem teclado. Só você e seu paciente.</div>
+    </div>
+
+    <div class="slide-num"><span>05</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 6 — PASSO 2 ============ -->
+  <section class="s5 step" data-screen-label="06 Passo 2 — Escuta e registra">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="eyebrow"><span class="dot"></span>COMO FUNCIONA · PASSO 02</div>
+      <div class="h-display" style="font-size: 76px;"><span class="num">02</span> &nbsp; O Donto escuta e registra tudo.</div>
+      <div class="sub-h">Transcrição em tempo real. Odontograma e periograma preenchidos por voz enquanto o dentista examina.</div>
+
+      <div class="twin">
+        <div class="mini">
+          <div class="head">
+            <div class="t">TRANSCRIÇÃO</div>
+            <div class="live">ao vivo</div>
+          </div>
+          <div class="transcript">
+            <div class="t-msg dr">
+              <div class="av">Dr</div>
+              <div>
+                <div class="who">Dentista</div>
+                <div class="bubble" data-typewrite="Vamos dar uma olhada no dente 36. Você sente alguma dor ao mastigar?"></div>
+              </div>
+            </div>
+            <div class="t-msg pa">
+              <div class="av">P</div>
+              <div>
+                <div class="who">Paciente</div>
+                <div class="bubble" data-typewrite="Sim, principalmente quando como algo gelado. É bem incômodo."></div>
+              </div>
+            </div>
+            <div class="t-msg dr">
+              <div class="av">Dr</div>
+              <div>
+                <div class="who">Dentista</div>
+                <div class="bubble" data-typewrite="Entendi. Vou marcar aqui — sensibilidade compatível com cárie classe I no oclusal."></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mini odo-card">
+          <img src="assets/odontograma.png" alt="Odontograma assistido por IA">
+        </div>
+      </div>
+
+      <div class="footer-q">Cada detalhe clínico capturado. Sem você digitar uma letra.</div>
+    </div>
+
+    <div class="slide-num"><span>06</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 7 — PASSO 3 ============ -->
+  <section class="s6 step" data-screen-label="07 Passo 3 — Documentação">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="eyebrow"><span class="dot"></span>COMO FUNCIONA · PASSO 03</div>
+      <div class="h-display" style="font-size: 76px;"><span class="num">03</span> &nbsp; Documentação <em style="font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;">completa</em> em segundos.</div>
+      <div class="sub-h">Ao fim da consulta, <strong style="color: var(--ink); font-weight: 600;"> documentos no padrão CFO</strong> prontos para revisar e assinar digitalmente.</div>
+
+      <div class="mockup">
+        <div class="docs-grid">
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 01</div>
+              <div class="name">Prontuário CFO</div>
+            </div>
+          </div>
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8 2 5 5 5 9c0 3 1 5 1 8 0 2 1 5 3 5 1.5 0 2-2 3-2s1.5 2 3 2c2 0 3-3 3-5 0-3 1-5 1-8 0-4-3-7-7-7z"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 02</div>
+              <div class="name">Odontograma</div>
+            </div>
+          </div>
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-7"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 03</div>
+              <div class="name">Periograma</div>
+            </div>
+          </div>
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 04</div>
+              <div class="name">Plano de Tratamento</div>
+            </div>
+          </div>
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 05</div>
+              <div class="name">TCLE Digital</div>
+            </div>
+          </div>
+          <div class="doc">
+            <div class="icn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5a4.95 4.95 0 0 1-7-7L13 4l7 7-9.5 9.5z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>
+            </div>
+            <div class="text">
+              <div class="num">DOC 06</div>
+              <div class="name">Receituário</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-q">Assinatura digital com validade jurídica plena — Lei 14.063/2020</div>
+    </div>
+
+    <div class="slide-num"><span>07</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 8 — SONDA ============ -->
+  <section class="s7" data-screen-label="08 A Sonda">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="left">
+        <div class="eyebrow"><span class="dot"></span>ASSISTENTE CLÍNICA · IA</div>
+        <div class="h-1">Durante a consulta,<br><em>o dentista</em> não está sozinho.</div>
+        <div class="lead">A Sonda é sua assistente clínica com IA — treinada nos protocolos do CFO, EFP, ITI e AAE.</div>
+
+        <div class="bullets">
+          <div class="bullet">
+            <div class="m">01</div>
+            <div class="x"><strong>Responde dúvidas clínicas</strong> em tempo real <em>— sem pausar o atendimento.</em></div>
+          </div>
+          <div class="bullet">
+            <div class="m">02</div>
+            <div class="x"><strong>Sugere planos de tratamento</strong> <em>baseados no histórico do paciente.</em></div>
+          </div>
+          <div class="bullet">
+            <div class="m">03</div>
+            <div class="x"><strong>Cita a fonte</strong> <em>— CFO, EFP, ITI — para cada resposta.</em></div>
+          </div>
+          <div class="bullet">
+            <div class="m">04</div>
+            <div class="x"><strong>Aprende com o dentista</strong> <em>— quanto mais usa, mais entende seu protocolo.</em></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right">
+        <div class="sonda">
+          <div class="sonda-h">
+            <div class="name">Sonda <span>— assistente clínica</span></div>
+            <div class="status">Analisando atendimento</div>
+          </div>
+
+          <div class="sonda-msg">
+            <div class="who-line">SONDA · agora</div>
+            <div id="sonda-typing"></div>
+            <div class="sonda-src">FONTE · <b>CFO Resolução 118/2012</b> · <b>ITI Treatment Guide vol. 4</b></div>
+          </div>
+
+          <div class="sonda-chips">
+            <div class="chip">Ver protocolo</div>
+            <div class="chip">Gerar resumo</div>
+            <div class="chip">Alertas clínicos</div>
+          </div>
+
+          <div class="sonda-input">
+            <span>Pergunte à Sonda…</span>
+            <div class="send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>08</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 9 — DIFERENCIAL ============ -->
+  <section class="s8" data-screen-label="09 O diferencial real">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="head">
+        <div class="eyebrow" style="justify-content: center; display: flex;"><span class="dot"></span>O DIFERENCIAL REAL</div>
+        <div class="h-1" style="margin-top: 24px;">Engenharia dedicada à<br>odontologia <em>brasileira</em>.</div>
+        <div class="sub">Enquanto o mercado global adapta soluções importadas, o Donto foi desenvolvido sob medida para a realidade clínica e regulatória do dentista brasileiro.</div>
+      </div>
+
+      <div class="diff-grid">
+        <div class="diff">
+          <div class="n">01</div>
+          <div class="t">Padrão CFO nativo</div>
+          <div class="d">Nenhuma adaptação necessária. Toda a documentação já nasce no formato exigido pelo Conselho.</div>
+        </div>
+        <div class="diff">
+          <div class="n">02</div>
+          <div class="t">LGPD &amp; Governança de Dados</div>
+          <div class="d">Os dados do seu paciente são seus — sempre. Hospedagem segura, criptografia ponta a ponta, trilha de auditoria, controle granular de acesso e políticas de retenção em conformidade com a LGPD e o CFO.</div>
+        </div>
+        <div class="diff">
+          <div class="n">03</div>
+          <div class="t">Validade jurídica plena</div>
+          <div class="d">Assinatura digital conforme a Lei 14.063/2020 — todo documento defensável em juízo.</div>
+        </div>
+        <div class="diff">
+          <div class="n">04</div>
+          <div class="t">RAG clínico privado</div>
+          <div class="d">Protocolos exclusivos da sua clínica, dos seus professores, das suas referências — só para você.</div>
+        </div>
+        <div class="diff">
+          <div class="n">05</div>
+          <div class="t">Learning Loop</div>
+          <div class="d">IA que aprende com cada correção sua. Quanto mais você usa, mais ela vira sua extensão.</div>
+        </div>
+        <div class="diff">
+          <div class="n">06</div>
+          <div class="t">Não é uma IA genérica</div>
+          <div class="d">Enquanto IAs genéricas respondem como um buscador, o Donto pensa como dentista — clínico, com protocolos do CFO e contexto do seu paciente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>09</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 10 — ANTES / DEPOIS ============ -->
+  <section class="s9" data-screen-label="10 O que muda no seu dia">
+    <div class="top-line"></div>
+    <div class="brand"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+    <div class="slide-body body">
+      <div class="head">
+        <div class="eyebrow" style="display:flex; justify-content:center;"><span class="dot"></span>O QUE MUDA NO SEU DIA</div>
+        <div class="h-1" style="margin-top: 24px;">Imagine terminar o dia<br><em>com tudo pronto.</em></div>
+      </div>
+
+      <div class="compare">
+        <div class="col before">
+          <div class="col-head">Antes</div>
+          <div class="row"><div class="icon">✕</div>2 horas preenchendo prontuários após o expediente</div>
+          <div class="row"><div class="icon">✕</div>TCLE genérico que não protege em caso de processo</div>
+          <div class="row"><div class="icon">✕</div>Dúvida clínica sem resposta rápida durante o atendimento</div>
+          <div class="row"><div class="icon">✕</div>Documentação incompleta — risco real de ser processado</div>
+          <div class="row"><div class="icon">✕</div>Final do dia exausto e ainda com fichas pendentes</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="col after">
+          <div class="col-head">Com o Donto</div>
+          <div class="row"><div class="icon">✓</div>Prontuários prontos ao fim de cada consulta</div>
+          <div class="row"><div class="icon">✓</div>TCLE digital com assinatura e validade jurídica plena</div>
+          <div class="row"><div class="icon">✓</div>Sonda responde na hora — durante o atendimento</div>
+          <div class="row"><div class="icon">✓</div>Documentação completa — você fica protegido pelo CFO</div>
+          <div class="row"><div class="icon">✓</div>Final do dia livre — para o que realmente importa</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-num"><span>10</span> / 11</div>
+  </section>
+
+  <!-- ============ SLIDE 11 — ENCERRAMENTO ============ -->
+  <section class="s10" data-screen-label="11 Encerramento">
+    <div class="top-line"></div>
+
+    <div class="body">
+      <div class="big-logo"><img src="assets/donto-logo.png" alt="DontoAI"></div>
+
+      <div class="h">
+        <div>O Dentista cuida do paciente.</div>
+        <div class="l2">O Donto cuida do resto.</div>
+      </div>
+
+      <div class="manifesto">
+        Rumo a uma odontologia mais <em>inteligente, colaborativa e centrada no paciente.</em>
+      </div>
+
+      <div class="subline">Teste grátis por 7 dias.</div>
+
+      <div class="cta">
+        <a class="pill" href="https://donto.app" target="_blank">
+          Começar agora
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>adm@znia.ai</span> · <span></span> · Znia Soluções em IA
+    </div>
+  </section>
+
+</deck-stage>
+
+<script>
+  // ============ Helpers ============
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  // ============ Timer (slide 05) ============
+  (function runTimer() {
+    const el = document.getElementById('rec-timer');
+    if (!el) return;
+    let seconds = 0;
+    function tick() {
+      const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const s = String(seconds % 60).padStart(2, '0');
+      el.innerHTML = m + '<span class="colon">:</span>' + s;
+      seconds = (seconds + 1) % (60 * 6); // loop after 6 min
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  // ============ Transcript typing (slide 06) ============
+  async function typeText(el, text, speed = 28) {
+    el.textContent = '';
+    el.classList.add('typing');
+    for (let i = 0; i < text.length; i++) {
+      el.textContent += text[i];
+      await sleep(speed + Math.random() * 30);
+    }
+    el.classList.remove('typing');
+  }
+
+  (async function runTranscript() {
+    const bubbles = Array.from(document.querySelectorAll('[data-typewrite]'));
+    if (!bubbles.length) return;
+    const messages = bubbles.map(b => ({ el: b, text: b.getAttribute('data-typewrite'), parent: b.closest('.t-msg') }));
+
+    while (true) {
+      // Reset
+      messages.forEach(m => {
+        m.el.textContent = '';
+        if (m.parent) m.parent.style.opacity = '0';
+      });
+      await sleep(600);
+
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i];
+        if (m.parent) {
+          m.parent.style.transition = 'opacity 0.4s ease';
+          m.parent.style.opacity = '1';
+        }
+        await sleep(350);
+        await typeText(m.el, m.text, 26);
+        // last message keeps the caret blinking briefly before loop
+        if (i === messages.length - 1) m.el.classList.add('typing');
+        await sleep(1100);
+      }
+
+      // Pause with full transcript shown
+      await sleep(5500);
+    }
+  })();
+
+  // ============ Sonda typing (slide 08) ============
+  // Segments: plain text + bold runs
+  const sondaSegments = [
+    { text: 'Com base na transcrição, identifiquei ', bold: false },
+    { text: 'sensibilidade no dente 36', bold: true },
+    { text: ', compatível com ', bold: false },
+    { text: 'cárie oclusal classe I', bold: true },
+    { text: '. Deseja que eu sugira protocolo de diagnóstico diferencial?', bold: false },
+  ];
+
+  async function typeSondaSegments(host, segments, speed = 22) {
+    host.innerHTML = '';
+    host.classList.add('typing');
+    for (const seg of segments) {
+      const node = seg.bold ? document.createElement('strong') : document.createElement('span');
+      host.appendChild(node);
+      for (const ch of seg.text) {
+        node.textContent += ch;
+        await sleep(speed + Math.random() * 20);
+      }
+    }
+    host.classList.remove('typing');
+  }
+
+  (async function runSonda() {
+    const host = document.getElementById('sonda-typing');
+    if (!host) return;
+    while (true) {
+      host.innerHTML = '';
+      await sleep(700);
+      await typeSondaSegments(host, sondaSegments, 22);
+      host.classList.add('typing'); // keep caret while idle
+      await sleep(6500);
+    }
+  })();
+
+  // ============ Fullscreen button ============
+  (function setupFullscreen() {
+    const btn = document.getElementById('fs-btn');
+    if (!btn) return;
+
+    const enterIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/><path d="M21 16v5h-5"/></svg>';
+    const exitIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5H3"/><path d="M16 3v5h5"/><path d="M8 21v-5H3"/><path d="M16 21v-5h5"/></svg>';
+
+    function updateIcon() {
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+      btn.innerHTML = isFs ? exitIcon : enterIcon;
+      btn.title = isFs ? 'Sair de tela cheia (Esc)' : 'Tela cheia';
+      // Hide thumbnail rail in fullscreen, restore on exit
+      const deck = document.querySelector('deck-stage');
+      if (deck) {
+        if (isFs) deck.setAttribute('no-rail', '');
+        else deck.removeAttribute('no-rail');
+      }
+    }
+
+    btn.addEventListener('click', () => {
+      const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+      if (isFs) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        const el = document.documentElement;
+        (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      }
+    });
+
+    document.addEventListener('fullscreenchange', updateIcon);
+    document.addEventListener('webkitfullscreenchange', updateIcon);
+    updateIcon();
+  })();
+</script>
+
+<button id="fs-btn" type="button" aria-label="Tela cheia"></button>
+
+<style>
+  #fs-btn {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    opacity: 0.55;
+  }
+  #fs-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  #fs-btn svg { width: 20px; height: 20px; display: block; }
+  /* Hide when document is in fullscreen and idle? Keep visible — small UI */
+  @media print { #fs-btn { display: none; } }
+</style>
+
+</body>
+</html>
